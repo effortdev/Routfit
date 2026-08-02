@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,14 +43,38 @@ public class RoutineService {
         return getRoutinesForDate(userId, LocalDate.now());
     }
 
+    /**
+     * 특정 날짜 기준으로 "그날 실제로 존재했던 루틴"을 정확하게 복원해서 조회.
+     * - 그날 로그가 남아있는 루틴: 지금은 삭제(비활성화)됐어도 포함, 체크 상태 그대로 반영
+     * - 그날 로그는 없지만 그 시점에 이미 생성되어 있었고 지금도 활성 상태인 루틴: 미체크로 포함
+     * - 그 시점 이후에 새로 생성된 루틴은 제외 (그날 존재하지 않았으므로)
+     * 오늘 날짜로 호출하면 결과가 기존 "현재 활성 루틴 전체"와 동일해서 getTodayRoutines에도 안전하게 재사용 가능.
+     */
     public List<RoutineResponse> getRoutinesForDate(Long userId, LocalDate date) {
-        List<Routine> routines = routineRepository.findByUserIdAndActiveTrueOrderBySortOrderAsc(userId);
         List<RoutineLog> logs = routineLogRepository.findByUserIdAndLogDate(userId, date);
-        Map<Long, Boolean> completedMap = logs.stream()
-                .collect(Collectors.toMap(l -> l.getRoutine().getId(), RoutineLog::isCompleted));
+        Map<Long, RoutineLog> logByRoutineId = logs.stream()
+                .collect(Collectors.toMap(l -> l.getRoutine().getId(), l -> l, (a, b) -> a));
 
-        return routines.stream()
-                .map(r -> toResponse(r, completedMap.getOrDefault(r.getId(), false)))
+        Map<Long, Routine> resultRoutines = new LinkedHashMap<>();
+
+        // 1) 그날 로그가 있던 루틴 (지금 삭제됐어도 그 시점 데이터는 살아있음)
+        for (RoutineLog log : logs) {
+            resultRoutines.put(log.getRoutine().getId(), log.getRoutine());
+        }
+
+        // 2) 그 시점에 이미 존재했고 지금도 활성 상태인 루틴 (로그 없으면 미체크로 표시)
+        LocalDate endOfDay = date.plusDays(1);
+        routineRepository.findByUserIdAndActiveTrueOrderBySortOrderAsc(userId).stream()
+                .filter(r -> r.getCreatedAt() != null && r.getCreatedAt().toLocalDate().isBefore(endOfDay))
+                .forEach(r -> resultRoutines.putIfAbsent(r.getId(), r));
+
+        return resultRoutines.values().stream()
+                .map(r -> {
+                    boolean completed = Optional.ofNullable(logByRoutineId.get(r.getId()))
+                            .map(RoutineLog::isCompleted)
+                            .orElse(false);
+                    return toResponse(r, completed);
+                })
                 .collect(Collectors.toList());
     }
 
