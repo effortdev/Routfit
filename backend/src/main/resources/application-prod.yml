@@ -1,0 +1,7 @@
+logging:
+  level:
+    com.effortdev.roufit: INFO
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate

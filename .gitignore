@@ -1,0 +1,11 @@
+.env
+node_modules/
+dist/
+build/
+.gradle/
+*.log
+
+# 에디터별 설정 (VS Code / IntelliJ)
+.vscode/
+.idea/
+*.iml

@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: roufit-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-roufit}
+      MYSQL_USER: ${DB_USERNAME:-roufit}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - roufit-net
+    # 외부(호스트) 포트 노출 없음: 백엔드 컨테이너만 내부 네트워크로 접근
+
+  backend:
+    build:
+      context: ./backend
+    container_name: roufit-backend
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-roufit}
+      DB_USERNAME: ${DB_USERNAME:-roufit}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    networks:
+      - roufit-net
+    # Nginx Proxy Manager가 이 컨테이너의 8080 포트로 프록시하도록 설정
+    expose:
+      - "8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    container_name: roufit-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - roufit-net
+    # Nginx Proxy Manager가 이 컨테이너의 80 포트로 프록시하도록 설정
+    expose:
+      - "80"
+
+networks:
+  roufit-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
