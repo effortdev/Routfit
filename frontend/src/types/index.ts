@@ -38,6 +38,7 @@ export interface BodyFatLevel {
   currentBodyFatPercent: number | null
   nextLevel: number | null
   nextLevelThreshold: number | null
+  levelLabel: string | null
   message: string
 }
 

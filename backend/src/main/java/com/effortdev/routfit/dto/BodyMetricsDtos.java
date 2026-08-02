@@ -27,6 +27,7 @@ public class BodyMetricsDtos {
             Double currentBodyFatPercent,
             Integer nextLevel,
             Double nextLevelThreshold,
+            String levelLabel,
             String message
     ) {}
 }
