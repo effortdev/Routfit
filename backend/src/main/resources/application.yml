@@ -28,3 +28,4 @@ jwt:
 logging:
   level:
     com.effortdev.routfit: DEBUG
+# deploy trigger
