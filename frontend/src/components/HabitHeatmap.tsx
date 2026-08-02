@@ -26,7 +26,12 @@ function formatDate(dateStr: string): string {
 }
 
 function toIsoDate(d: Date): string {
-  return d.toISOString().slice(0, 10)
+  // toISOString()은 UTC 기준이라 한국 시간(UTC+9)에서 자정~오전9시 사이에 날짜가 하루 밀리는 버그가 있었음.
+  // 기기의 로컬 시간 그대로 YYYY-MM-DD를 만들도록 수정.
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 // 깃허브 스타일 잔디, 모바일 가로 스크롤 전용 (7행 x N열)
