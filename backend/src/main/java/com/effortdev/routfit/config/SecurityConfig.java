@@ -26,7 +26,7 @@ public class SecurityConfig {
     // 홈서버 배포 시 실제 프론트 도메인으로 교체 (예: https://routfit.mydomain.com)
     private static final List<String> ALLOWED_ORIGINS = List.of(
             "http://localhost:5173",
-            "https://routfit.effortdev.duckdns.org"
+            "https://routfit.duckdns.org"
     );
 
     public SecurityConfig(JwtTokenProvider jwtTokenProvider) {
