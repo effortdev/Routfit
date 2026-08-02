@@ -75,48 +75,62 @@ npm run dev
    - `https://roufit.효과적인도메인` (홈서버 배포용 실제 도메인)
 4. 발급된 클라이언트 ID를 백엔드 `GOOGLE_CLIENT_ID`와 프론트 `VITE_GOOGLE_CLIENT_ID`에 동일하게 설정
 
-## 홈서버 배포 (FIREBAT R3 + WSL2 + Docker + Nginx Proxy Manager 기준)
+## 홈서버 배포 (Docker만 설치, 서버는 이미지 pull만 함)
 
-기존에 구축해두신 환경(WSL2, Docker, Nginx Proxy Manager, GitHub Actions SSH 배포)에
-그대로 얹는 구조로 설계했음.
+**핵심 구조**: GitHub Actions가 `backend/`, `frontend/`를 각각 Docker 이미지로 빌드해서
+`ghcr.io`(GitHub Container Registry)에 push하고, 서버는 그 이미지를 pull 받아 실행만 해요.
+즉 서버에는 소스코드, Gradle, Node 아무것도 필요 없고 **Docker + Docker Compose만 있으면 됨**.
 
-### 1) 서버에 프로젝트 클론 후 .env 작성
-
-```bash
-git clone <이 프로젝트 저장소> roufit
-cd roufit
-cp .env.example .env
-# .env 안의 비밀번호/시크릿/도메인 값을 실제 값으로 교체
-```
-
-### 2) 컨테이너 빌드 및 실행
+### 1) 최초 1회 서버 세팅
 
 ```bash
-docker compose up -d --build
+mkdir -p ~/roufit && cd ~/roufit
+# docker-compose.yml, .env 두 파일만 서버에 올려두면 됨 (git clone 불필요)
 ```
 
-- `mysql`: 내부 네트워크에서만 접근 가능 (호스트에 포트 노출 안 함)
-- `backend`: 8080 포트를 컨테이너 내부에 `expose`만 함 (host 포트 바인딩 없음)
-- `frontend`: 80 포트를 컨테이너 내부에 `expose`만 함
+로컬에서 `docker-compose.yml`과 `.env`(값 채운 것)를 scp로 서버에 복사:
+```bash
+scp docker-compose.yml .env your-server-user@your-server-host:~/roufit/
+```
 
-### 3) Nginx Proxy Manager에서 프록시 호스트 2개 등록
+### 2) ghcr.io 이미지가 private일 경우, 서버에서 최초 1회 로그인
+
+`ghcr.io`에 push된 이미지는 기본적으로 private이라 서버에서 pull하려면 인증이 필요해요.
+GitHub에서 `read:packages` 권한만 가진 PAT을 발급해서:
+```bash
+echo <PAT> | docker login ghcr.io -u effortdev --password-stdin
+```
+(또는 GitHub 저장소 → Packages → 각 이미지 → Package settings → Change visibility → Public으로
+바꾸면 로그인 없이도 pull 가능)
+
+### 3) GitHub Secrets 등록 (저장소 Settings → Secrets and variables → Actions)
+
+| 이름 | 용도 |
+|---|---|
+| `HOME_SERVER_HOST` | 서버 IP/도메인 |
+| `HOME_SERVER_USER` | SSH 접속 계정 |
+| `HOME_SERVER_SSH_KEY` | SSH 개인키 |
+| `VITE_API_BASE_URL` | 프론트 빌드에 주입될 백엔드 API 주소 |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth 클라이언트 ID |
+
+(`GITHUB_TOKEN`은 별도 등록 없이 Actions가 자동으로 제공해요.)
+
+### 4) 이후로는 push만 하면 끝
+
+`.github/workflows/deploy-backend.yml`, `deploy-frontend.yml`이 각각:
+1. 변경된 폴더(`backend/` 또는 `frontend/`)만 감지해서
+2. Docker 이미지 빌드 → ghcr.io에 push
+3. SSH로 서버 접속 → 해당 서비스만 `docker compose pull` + `up -d`
+
+즉 **git push 한 번 = 해당 부분만 빌드되고 서버에 자동 반영**돼요. 서버는 그 사이에
+아무 파일도 받지 않고 이미지만 새로 받아서 컨테이너를 재시작할 뿐이에요.
+
+### 5) Nginx Proxy Manager 프록시 등록 (기존 방식과 동일)
 
 | 도메인 | 대상 컨테이너 | 포트 |
 |---|---|---|
 | `roufit.내도메인` | `roufit-frontend` | 80 |
 | `roufit-api.내도메인` | `roufit-backend` | 8080 |
-
-두 도메인 모두 NPM에서 SSL(Let's Encrypt) 발급 체크. 컨테이너 이름으로 접근 가능한 건
-`docker-compose.yml`의 `roufit-net` 브리지 네트워크 덕분이라, NPM 컨테이너도 같은
-Docker 네트워크에 붙어 있거나 NPM이 컨테이너 이름을 resolve할 수 있어야 함
-(기존에 Nginx Proxy Manager로 다른 프로젝트 배포하신 방식과 동일).
-
-### 4) GitHub Actions로 자동 배포 연결 (선택)
-
-`.github/workflows/deploy-backend.yml`, `deploy-frontend.yml` 두 개를 이미 넣어뒀어요.
-`paths` 필터로 `backend/` 변경 시엔 백엔드만, `frontend/` 변경 시엔 프론트만 재빌드/재기동돼요.
-두 시크릿(`HOME_SERVER_HOST`, `HOME_SERVER_USER`, `HOME_SERVER_SSH_KEY`)만 저장소
-Settings → Secrets and variables → Actions에 등록하면 바로 동작함.
 
 
 ## 알아두면 좋은 점
