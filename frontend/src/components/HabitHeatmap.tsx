@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { HeatmapCell, Routine } from '../types'
 import { getRoutinesForDate } from '../api/routines'
 import { getMemoForDate, upsertMemo } from '../api/memos'
@@ -20,8 +20,12 @@ function formatDate(dateStr: string): string {
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
+function toIsoDate(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
+
 // 깃허브 스타일 잔디, 모바일 가로 스크롤 전용 (7행 x N열)
-// 잔디 하나를 누르면 오른쪽에 그날 루틴 체크 목록, 아래쪽에 그날 메모(일기)가 뜸
+// 페이지 진입 시 오늘 날짜가 기본으로 열려있고, 다른 잔디를 누르면 그 날짜 내용으로 전환됨
 export default function HabitHeatmap({ cells }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [dayRoutines, setDayRoutines] = useState<Routine[]>([])
@@ -35,14 +39,14 @@ export default function HabitHeatmap({ cells }: Props) {
     weeks.push(cells.slice(i, i + 7))
   }
 
-  async function handleCellClick(cell: HeatmapCell) {
-    setSelectedDate(cell.date)
+  async function loadDate(date: string) {
+    setSelectedDate(date)
     setIsLoadingDay(true)
     setMemoSavedMessage('')
     try {
       const [routines, memo] = await Promise.all([
-        getRoutinesForDate(cell.date),
-        getMemoForDate(cell.date)
+        getRoutinesForDate(date),
+        getMemoForDate(date)
       ])
       setDayRoutines(routines)
       setMemoContent(memo.content ?? '')
@@ -50,6 +54,10 @@ export default function HabitHeatmap({ cells }: Props) {
       setIsLoadingDay(false)
     }
   }
+
+  useEffect(() => {
+    loadDate(toIsoDate(new Date()))
+  }, [])
 
   async function handleSaveMemo() {
     if (!selectedDate) return
@@ -84,7 +92,7 @@ export default function HabitHeatmap({ cells }: Props) {
                     {week.map((cell) => (
                         <button
                             key={cell.date}
-                            onClick={() => handleCellClick(cell)}
+                            onClick={() => loadDate(cell.date)}
                             title={`${cell.date} · ${cell.completedCount}/${cell.totalCount}`}
                             className={`w-3 h-3 rounded-sm transition ${
                                 selectedDate === cell.date ? 'ring-1 ring-paper' : ''
