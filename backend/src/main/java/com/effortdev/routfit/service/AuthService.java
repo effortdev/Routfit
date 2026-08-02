@@ -52,7 +52,7 @@ public class AuthService {
     @Transactional
     public UserProfileResponse updateProfile(Long userId, ProfileUpdateRequest request) {
         User user = getUser(userId);
-        user.updateProfile(request.heightCm(), request.gender());
+        user.updateProfile(request.heightCm(), request.gender(), request.age());
         return toProfileResponse(user);
     }
 
@@ -68,6 +68,6 @@ public class AuthService {
     }
 
     private UserProfileResponse toProfileResponse(User user) {
-        return new UserProfileResponse(user.getId(), user.getEmail(), user.getName(), user.getHeightCm(), user.getGender());
+        return new UserProfileResponse(user.getId(), user.getEmail(), user.getName(), user.getHeightCm(), user.getGender(), user.getAge());
     }
 }

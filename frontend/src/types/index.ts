@@ -6,6 +6,7 @@ export interface UserProfile {
   name: string
   heightCm: number | null
   gender: Gender | null
+  age: number | null
 }
 
 export interface Routine {

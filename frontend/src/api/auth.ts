@@ -17,7 +17,7 @@ export async function getMyProfile(): Promise<UserProfile> {
   return data
 }
 
-export async function updateMyProfile(heightCm?: number, gender?: Gender): Promise<UserProfile> {
-  const { data } = await apiClient.patch<UserProfile>('/api/v1/auth/me', { heightCm, gender })
+export async function updateMyProfile(heightCm?: number, gender?: Gender, age?: number): Promise<UserProfile> {
+  const { data } = await apiClient.patch<UserProfile>('/api/v1/auth/me', { heightCm, gender, age })
   return data
 }

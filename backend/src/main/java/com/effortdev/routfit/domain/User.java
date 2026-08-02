@@ -32,6 +32,8 @@ public class User {
 
     private Double heightCm;
 
+    private Integer age;
+
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
@@ -55,9 +57,10 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void updateProfile(Double heightCm, Gender gender) {
+    public void updateProfile(Double heightCm, Gender gender, Integer age) {
         if (heightCm != null) this.heightCm = heightCm;
         if (gender != null) this.gender = gender;
+        if (age != null) this.age = age;
     }
 
     public void markMetricSynced() {

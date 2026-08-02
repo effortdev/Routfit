@@ -11,7 +11,7 @@ public class AuthDtos {
 
     public record RefreshRequest(@NotBlank String refreshToken) {}
 
-    public record UserProfileResponse(Long id, String email, String name, Double heightCm, Gender gender) {}
+    public record UserProfileResponse(Long id, String email, String name, Double heightCm, Gender gender, Integer age) {}
 
-    public record ProfileUpdateRequest(Double heightCm, Gender gender) {}
+    public record ProfileUpdateRequest(Double heightCm, Gender gender, Integer age) {}
 }

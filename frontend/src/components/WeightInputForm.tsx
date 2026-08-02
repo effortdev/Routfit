@@ -63,7 +63,7 @@ export default function WeightInputForm({ defaultDate, onSubmit }: Props) {
             step="0.1"
             value={bodyFat}
             onChange={(e) => setBodyFat(e.target.value)}
-            placeholder="선택"
+            placeholder="비워두면 자동계산"
             className="bg-panelSoft border border-line rounded-lg px-2 py-2.5 text-sm text-paper placeholder:text-paper/30 focus:outline-none focus:border-moss min-h-[44px]"
           />
         </label>
