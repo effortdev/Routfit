@@ -5,6 +5,11 @@ import { getMemoForDate, upsertMemo } from '../api/memos'
 
 interface Props {
   cells: HeatmapCell[]
+  rangeStart: string
+  rangeEnd: string
+  isDefaultRange: boolean
+  onJumpToDate: (dateStr: string) => void
+  onResetRange: () => void
 }
 
 function intensityColor(rate: number): string {
@@ -26,7 +31,7 @@ function toIsoDate(d: Date): string {
 
 // 깃허브 스타일 잔디, 모바일 가로 스크롤 전용 (7행 x N열)
 // 페이지 진입 시 오늘 날짜가 기본으로 열려있고, 다른 잔디를 누르면 그 날짜 내용으로 전환됨
-export default function HabitHeatmap({ cells }: Props) {
+export default function HabitHeatmap({ cells, rangeStart, rangeEnd, isDefaultRange, onJumpToDate, onResetRange }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [dayRoutines, setDayRoutines] = useState<Routine[]>([])
   const [isLoadingDay, setIsLoadingDay] = useState(false)
@@ -81,6 +86,25 @@ export default function HabitHeatmap({ cells }: Props) {
                 <span key={r} className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: intensityColor(r) }} />
             ))}
             <span>높음</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+        <span className="text-[11px] font-mono text-paper/40">
+          {formatDate(rangeStart)} ~ {formatDate(rangeEnd)}
+        </span>
+          <div className="flex items-center gap-1.5">
+            <input
+                type="date"
+                onChange={(e) => e.target.value && onJumpToDate(e.target.value)}
+                title="이 날짜부터 잔디 보기"
+                className="bg-panelSoft border border-line rounded-lg px-2 py-1 text-[11px] text-paper focus:outline-none focus:border-moss"
+            />
+            {!isDefaultRange && (
+                <button onClick={onResetRange} className="text-[11px] text-moss px-1 py-1">
+                  최근으로
+                </button>
+            )}
           </div>
         </div>
 
