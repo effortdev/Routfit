@@ -38,9 +38,12 @@ public class RoutineService {
     }
 
     public List<RoutineResponse> getTodayRoutines(Long userId) {
-        LocalDate today = LocalDate.now();
+        return getRoutinesForDate(userId, LocalDate.now());
+    }
+
+    public List<RoutineResponse> getRoutinesForDate(Long userId, LocalDate date) {
         List<Routine> routines = routineRepository.findByUserIdAndActiveTrueOrderBySortOrderAsc(userId);
-        List<RoutineLog> logs = routineLogRepository.findByUserIdAndLogDate(userId, today);
+        List<RoutineLog> logs = routineLogRepository.findByUserIdAndLogDate(userId, date);
         Map<Long, Boolean> completedMap = logs.stream()
                 .collect(Collectors.toMap(l -> l.getRoutine().getId(), RoutineLog::isCompleted));
 

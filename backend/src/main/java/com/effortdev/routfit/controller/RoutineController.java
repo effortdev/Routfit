@@ -27,6 +27,12 @@ public class RoutineController {
         return routineService.getTodayRoutines(userId);
     }
 
+    // 히트맵에서 특정 날짜 클릭 시, 그날 체크했던 루틴 목록 조회
+    @GetMapping("/logs")
+    public List<RoutineResponse> getRoutinesForDate(@CurrentUserId Long userId, @RequestParam LocalDate date) {
+        return routineService.getRoutinesForDate(userId, date);
+    }
+
     @PutMapping("/{routineId}")
     public RoutineResponse update(@CurrentUserId Long userId, @PathVariable Long routineId,
                                   @RequestBody UpdateRoutineRequest request) {
