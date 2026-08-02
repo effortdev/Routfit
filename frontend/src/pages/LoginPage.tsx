@@ -57,7 +57,7 @@ export default function LoginPage() {
             <circle cx="12" cy="12" r="9" />
           </svg>
         </div>
-        <h1 className="text-2xl font-display font-semibold text-paper">Roufit</h1>
+        <h1 className="text-2xl font-display font-semibold text-paper">Routfit</h1>
         <p className="text-sm text-paper/50 text-center leading-relaxed">
           매일의 루틴과 체중 변화를<br />기록하는 나만의 트래커
         </p>

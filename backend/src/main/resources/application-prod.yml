@@ -1,6 +1,6 @@
 logging:
   level:
-    com.effortdev.roufit: INFO
+    com.effortdev.routfit: INFO
 spring:
   jpa:
     hibernate:

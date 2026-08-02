@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:roufit}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ${DB_USERNAME:roufit}
-    password: ${DB_PASSWORD:roufit}
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:routfit}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${DB_USERNAME:routfit}
+    password: ${DB_PASSWORD:routfit}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -27,4 +27,4 @@ jwt:
 
 logging:
   level:
-    com.effortdev.roufit: DEBUG
+    com.effortdev.routfit: DEBUG

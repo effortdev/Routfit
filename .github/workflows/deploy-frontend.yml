@@ -30,8 +30,8 @@ jobs:
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           tags: |
-            ghcr.io/effortdev/roufit-frontend:latest
-            ghcr.io/effortdev/roufit-frontend:${{ github.sha }}
+            ghcr.io/effortdev/routfit-frontend:latest
+            ghcr.io/effortdev/routfit-frontend:${{ github.sha }}
 
   deploy:
     needs: build-and-push
@@ -43,6 +43,6 @@ jobs:
           username: ${{ secrets.HOME_SERVER_USER }}
           key: ${{ secrets.HOME_SERVER_SSH_KEY }}
           script: |
-            cd ~/roufit
+            cd ~/routfit
             docker compose pull frontend
             docker compose up -d frontend

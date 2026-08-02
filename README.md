@@ -1,4 +1,4 @@
-# Roufit — 루틴 & 체지방 트래커 (개인용)
+# Routfit — 루틴 & 체지방 트래커 (개인용)
 
 매일의 루틴 체크리스트와 몸무게/체지방률을 수동으로 기록하고, 체지방률을 10단계로
 시각화해 동기부여를 주는 개인용 웹앱. HealthKit 자동 연동 대신 수동 입력 방식으로
@@ -14,7 +14,7 @@
 ## 폴더 구조
 
 ```
-roufit/
+routfit/
 ├── backend/           # Spring Boot 프로젝트
 ├── frontend/          # Vite + React 프로젝트
 ├── docker-compose.yml
@@ -36,11 +36,11 @@ roufit/
 ### 1) MySQL만 Docker로 띄우고 나머지는 로컬 실행
 
 ```bash
-docker run -d --name roufit-mysql-dev \
+docker run -d --name routfit-mysql-dev \
   -e MYSQL_ROOT_PASSWORD=root \
-  -e MYSQL_DATABASE=roufit \
-  -e MYSQL_USER=roufit \
-  -e MYSQL_PASSWORD=roufit \
+  -e MYSQL_DATABASE=routfit \
+  -e MYSQL_USER=routfit \
+  -e MYSQL_PASSWORD=routfit \
   -p 3306:3306 mysql:8.0
 ```
 
@@ -72,7 +72,7 @@ npm run dev
 2. OAuth 2.0 클라이언트 ID 생성 (유형: 웹 애플리케이션)
 3. 승인된 자바스크립트 원본(Authorized JavaScript origins)에 다음 추가:
    - `http://localhost:5173` (로컬 개발용)
-   - `https://roufit.효과적인도메인` (홈서버 배포용 실제 도메인)
+   - `https://routfit.효과적인도메인` (홈서버 배포용 실제 도메인)
 4. 발급된 클라이언트 ID를 백엔드 `GOOGLE_CLIENT_ID`와 프론트 `VITE_GOOGLE_CLIENT_ID`에 동일하게 설정
 
 ## 홈서버 배포 (Docker만 설치, 서버는 이미지 pull만 함)
@@ -84,14 +84,11 @@ npm run dev
 ### 1) 최초 1회 서버 세팅
 
 ```bash
-mkdir -p ~/roufit && cd ~/roufit
-# docker-compose.yml, .env 두 파일만 서버에 올려두면 됨 (git clone 불필요)
+mkdir -p ~/routfit
 ```
 
-로컬에서 `docker-compose.yml`과 `.env`(값 채운 것)를 scp로 서버에 복사:
-```bash
-scp docker-compose.yml .env your-server-user@your-server-host:~/roufit/
-```
+이게 끝이에요. `docker-compose.yml`과 `.env`는 이제 **GitHub Actions가 배포할 때마다 자동으로
+서버에 써줘요** (아래 3번 시크릿만 등록하면 됨). 서버에서 파일을 직접 만들거나 scp할 필요 없음.
 
 ### 2) ghcr.io 이미지가 private일 경우, 서버에서 최초 1회 로그인
 
@@ -110,10 +107,17 @@ echo <PAT> | docker login ghcr.io -u effortdev --password-stdin
 | `HOME_SERVER_HOST` | 서버 IP/도메인 |
 | `HOME_SERVER_USER` | SSH 접속 계정 |
 | `HOME_SERVER_SSH_KEY` | SSH 개인키 |
+| `MYSQL_ROOT_PASSWORD` | MySQL 루트 비밀번호 (배포 시 서버 `.env`에 자동 기록) |
+| `DB_PASSWORD` | Routfit 전용 DB 계정 비밀번호 |
+| `JWT_SECRET` | JWT 서명용 랜덤 문자열 (32자 이상, `openssl rand -base64 32`로 생성) |
+| `GOOGLE_CLIENT_ID` | Google OAuth 클라이언트 ID (백엔드 idToken 검증용) |
 | `VITE_API_BASE_URL` | 프론트 빌드에 주입될 백엔드 API 주소 |
-| `VITE_GOOGLE_CLIENT_ID` | Google OAuth 클라이언트 ID |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth 클라이언트 ID (프론트 로그인 버튼용, 보통 위 값과 동일) |
 
 (`GITHUB_TOKEN`은 별도 등록 없이 Actions가 자동으로 제공해요.)
+
+이 시크릿들은 `deploy-backend.yml`의 배포 스텝에서 서버의 `~/routfit/.env`에 그대로
+써지고, `docker-compose.yml`도 매 배포마다 저장소의 최신 버전으로 갱신돼요.
 
 ### 4) 이후로는 push만 하면 끝
 
@@ -129,8 +133,8 @@ echo <PAT> | docker login ghcr.io -u effortdev --password-stdin
 
 | 도메인 | 대상 컨테이너 | 포트 |
 |---|---|---|
-| `roufit.내도메인` | `roufit-frontend` | 80 |
-| `roufit-api.내도메인` | `roufit-backend` | 8080 |
+| `routfit.내도메인` | `routfit-frontend` | 80 |
+| `routfit-api.내도메인` | `routfit-backend` | 8080 |
 
 
 ## 알아두면 좋은 점

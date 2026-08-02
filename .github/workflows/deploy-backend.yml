@@ -27,19 +27,39 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ghcr.io/effortdev/roufit-backend:latest
-            ghcr.io/effortdev/roufit-backend:${{ github.sha }}
+            ghcr.io/effortdev/routfit-backend:latest
+            ghcr.io/effortdev/routfit-backend:${{ github.sha }}
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy docker-compose.yml to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOME_SERVER_HOST }}
+          username: ${{ secrets.HOME_SERVER_USER }}
+          key: ${{ secrets.HOME_SERVER_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "~/routfit/"
+
       - uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.HOME_SERVER_HOST }}
           username: ${{ secrets.HOME_SERVER_USER }}
           key: ${{ secrets.HOME_SERVER_SSH_KEY }}
           script: |
-            cd ~/roufit
+            mkdir -p ~/routfit
+            cd ~/routfit
+            cat > .env << 'ENVEOF'
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            DB_NAME=routfit
+            DB_USERNAME=routfit
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            ENVEOF
             docker compose pull backend
-            docker compose up -d backend
+            docker compose up -d mysql backend

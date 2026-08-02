@@ -8,8 +8,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Roufit — 루틴 & 체지방 트래커',
-        short_name: 'Roufit',
+        name: 'Routfit — 루틴 & 체지방 트래커',
+        short_name: 'Routfit',
         description: '매일의 루틴과 체중/체지방 변화를 기록하는 개인용 트래커',
         theme_color: '#101314',
         background_color: '#101314',

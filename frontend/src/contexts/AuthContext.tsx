@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('roufit_access_token')
+    const token = localStorage.getItem('routfit_access_token')
     if (!token) {
       setIsLoading(false)
       return
@@ -25,22 +25,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getMyProfile()
       .then(setUser)
       .catch(() => {
-        localStorage.removeItem('roufit_access_token')
-        localStorage.removeItem('roufit_refresh_token')
+        localStorage.removeItem('routfit_access_token')
+        localStorage.removeItem('routfit_refresh_token')
       })
       .finally(() => setIsLoading(false))
   }, [])
 
   async function loginWithGoogle(idToken: string) {
     const res = await loginWithGoogleApi(idToken)
-    localStorage.setItem('roufit_access_token', res.accessToken)
-    localStorage.setItem('roufit_refresh_token', res.refreshToken)
+    localStorage.setItem('routfit_access_token', res.accessToken)
+    localStorage.setItem('routfit_refresh_token', res.refreshToken)
     setUser(res.user)
   }
 
   function logout() {
-    localStorage.removeItem('roufit_access_token')
-    localStorage.removeItem('roufit_refresh_token')
+    localStorage.removeItem('routfit_access_token')
+    localStorage.removeItem('routfit_refresh_token')
     setUser(null)
   }
 

@@ -13,7 +13,7 @@ export default function Header() {
       <div>
         <p className="text-xs text-moss font-mono tracking-wide">{dateLabel}</p>
         <h1 className="text-lg font-display font-semibold text-paper">
-          {user ? `${user.name}님` : 'Roufit'}
+          {user ? `${user.name}님` : 'Routfit'}
         </h1>
       </div>
       <Link

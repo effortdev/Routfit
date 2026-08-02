@@ -9,7 +9,7 @@ export const apiClient = axios.create({
 })
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('roufit_access_token')
+  const token = localStorage.getItem('routfit_access_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -26,18 +26,18 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
       try {
-        const refreshToken = localStorage.getItem('roufit_refresh_token')
+        const refreshToken = localStorage.getItem('routfit_refresh_token')
         if (!refreshToken) throw new Error('no refresh token')
 
         const { data } = await axios.post(`${API_BASE_URL}/api/v1/auth/refresh`, { refreshToken })
-        localStorage.setItem('roufit_access_token', data.accessToken)
-        localStorage.setItem('roufit_refresh_token', data.refreshToken)
+        localStorage.setItem('routfit_access_token', data.accessToken)
+        localStorage.setItem('routfit_refresh_token', data.refreshToken)
 
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`
         return apiClient(originalRequest)
       } catch (refreshError) {
-        localStorage.removeItem('roufit_access_token')
-        localStorage.removeItem('roufit_refresh_token')
+        localStorage.removeItem('routfit_access_token')
+        localStorage.removeItem('routfit_refresh_token')
         window.location.href = '/login'
         return Promise.reject(refreshError)
       } finally {
