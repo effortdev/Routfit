@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { MetricsEntry, BodyFatLevel } from '../types'
 import { getMetricsRange, upsertMetrics, getCurrentBodyFatLevel } from '../api/bodyMetrics'
+import { useAuth } from '../contexts/AuthContext'
 import Header from '../components/Header'
 import WeightInputForm from '../components/WeightInputForm'
 import MetricsTrendChart from '../components/MetricsTrendChart'
+import RecentBodyFatTrend from '../components/RecentBodyFatTrend'
 import BodyFatLevelCard from '../components/BodyFatLevelCard'
 
 function toIsoDate(d: Date) {
@@ -11,6 +13,7 @@ function toIsoDate(d: Date) {
 }
 
 export default function BodyMetricsPage() {
+  const { user } = useAuth()
   const [entries, setEntries] = useState<MetricsEntry[]>([])
   const [level, setLevel] = useState<BodyFatLevel | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -39,19 +42,26 @@ export default function BodyMetricsPage() {
   }
 
   return (
-    <div className="pb-24">
-      <Header />
-      <main className="px-5 pt-5 flex flex-col gap-4">
-        {isLoading ? (
-          <div className="text-paper/40 text-sm text-center py-10">불러오는 중...</div>
-        ) : (
-          <>
-            {level && <BodyFatLevelCard data={level} />}
-            <MetricsTrendChart entries={entries} />
-            <WeightInputForm defaultDate={today} onSubmit={handleSubmit} />
-          </>
-        )}
-      </main>
-    </div>
+      <div className="pb-24">
+        <Header />
+        <main className="px-5 pt-5 flex flex-col gap-4">
+          {isLoading ? (
+              <div className="text-paper/40 text-sm text-center py-10">불러오는 중...</div>
+          ) : (
+              <>
+                {level && <BodyFatLevelCard data={level} />}
+                <RecentBodyFatTrend entries={entries} />
+                <MetricsTrendChart entries={entries} />
+                <WeightInputForm
+                    defaultDate={today}
+                    userHeightCm={user?.heightCm}
+                    userGender={user?.gender}
+                    userAge={user?.age}
+                    onSubmit={handleSubmit}
+                />
+              </>
+          )}
+        </main>
+      </div>
   )
 }
