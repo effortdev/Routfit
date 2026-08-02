@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { HeatmapCell, Routine } from '../types'
 import { getRoutinesForDate } from '../api/routines'
+import { getMemoForDate, upsertMemo } from '../api/memos'
 
 interface Props {
   cells: HeatmapCell[]
@@ -20,11 +21,14 @@ function formatDate(dateStr: string): string {
 }
 
 // 깃허브 스타일 잔디, 모바일 가로 스크롤 전용 (7행 x N열)
-// 잔디 하나를 누르면 오른쪽에 그날 체크했던 루틴 목록이 뜸 (5개 넘으면 스크롤)
+// 잔디 하나를 누르면 오른쪽에 그날 루틴 체크 목록, 아래쪽에 그날 메모(일기)가 뜸
 export default function HabitHeatmap({ cells }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [dayRoutines, setDayRoutines] = useState<Routine[]>([])
   const [isLoadingDay, setIsLoadingDay] = useState(false)
+  const [memoContent, setMemoContent] = useState('')
+  const [isSavingMemo, setIsSavingMemo] = useState(false)
+  const [memoSavedMessage, setMemoSavedMessage] = useState('')
 
   const weeks: HeatmapCell[][] = []
   for (let i = 0; i < cells.length; i += 7) {
@@ -32,14 +36,30 @@ export default function HabitHeatmap({ cells }: Props) {
   }
 
   async function handleCellClick(cell: HeatmapCell) {
-    if (cell.totalCount === 0) return // 그날 루틴 자체가 없으면 클릭해도 무의미
     setSelectedDate(cell.date)
     setIsLoadingDay(true)
+    setMemoSavedMessage('')
     try {
-      const routines = await getRoutinesForDate(cell.date)
+      const [routines, memo] = await Promise.all([
+        getRoutinesForDate(cell.date),
+        getMemoForDate(cell.date)
+      ])
       setDayRoutines(routines)
+      setMemoContent(memo.content ?? '')
     } finally {
       setIsLoadingDay(false)
+    }
+  }
+
+  async function handleSaveMemo() {
+    if (!selectedDate) return
+    setIsSavingMemo(true)
+    try {
+      await upsertMemo(selectedDate, memoContent)
+      setMemoSavedMessage('저장했어요.')
+      setTimeout(() => setMemoSavedMessage(''), 2000)
+    } finally {
+      setIsSavingMemo(false)
     }
   }
 
@@ -108,6 +128,31 @@ export default function HabitHeatmap({ cells }: Props) {
               </div>
           )}
         </div>
+
+        {/* 선택한 날짜의 메모(간단한 일기) - 전체 너비로 아래에 펼침 */}
+        {selectedDate && (
+            <div className="mt-3 pt-3 border-t border-line flex flex-col gap-2">
+              <span className="text-[11px] text-paper/40">{formatDate(selectedDate)} 메모</span>
+              <textarea
+                  value={memoContent}
+                  onChange={(e) => setMemoContent(e.target.value)}
+                  maxLength={500}
+                  rows={3}
+                  placeholder="오늘 하루 간단히 기록해보세요..."
+                  className="w-full bg-panelSoft border border-line rounded-lg px-3 py-2 text-sm text-paper placeholder:text-paper/30 focus:outline-none focus:border-moss resize-none"
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-paper/30">{memoContent.length}/500</span>
+                <button
+                    onClick={handleSaveMemo}
+                    disabled={isSavingMemo}
+                    className="bg-moss text-ink text-xs font-medium rounded-lg px-3 py-1.5 min-h-[32px] active:scale-95 transition disabled:opacity-50"
+                >
+                  {isSavingMemo ? '저장 중...' : memoSavedMessage || '메모 저장'}
+                </button>
+              </div>
+            </div>
+        )}
       </div>
   )
 }
