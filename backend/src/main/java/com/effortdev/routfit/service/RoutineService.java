@@ -39,8 +39,20 @@ public class RoutineService {
         return toResponse(routine, false);
     }
 
+    // "오늘" 목록은 항상 지금 활성 상태인 루틴만 보여줘야 함 (체크 후 삭제해도 즉시 사라져야 함).
+    // getRoutinesForDate와 다르게 재사용하지 않는 이유: getRoutinesForDate는 "삭제됐어도 그날 로그가
+    // 있으면 과거 기록으로 보여준다"는 로직이 있어서, 오늘 체크 후 바로 삭제하면 당일에도
+    // 계속 남아있는 것처럼 보이는 버그가 있었음.
     public List<RoutineResponse> getTodayRoutines(Long userId) {
-        return getRoutinesForDate(userId, LocalDate.now());
+        LocalDate today = LocalDate.now();
+        List<Routine> routines = routineRepository.findByUserIdAndActiveTrueOrderBySortOrderAsc(userId);
+        List<RoutineLog> logs = routineLogRepository.findByUserIdAndLogDate(userId, today);
+        Map<Long, Boolean> completedMap = logs.stream()
+                .collect(Collectors.toMap(l -> l.getRoutine().getId(), RoutineLog::isCompleted));
+
+        return routines.stream()
+                .map(r -> toResponse(r, completedMap.getOrDefault(r.getId(), false)))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -48,7 +60,8 @@ public class RoutineService {
      * - 그날 로그가 남아있는 루틴: 지금은 삭제(비활성화)됐어도 포함, 체크 상태 그대로 반영
      * - 그날 로그는 없지만 그 시점에 이미 생성되어 있었고 지금도 활성 상태인 루틴: 미체크로 포함
      * - 그 시점 이후에 새로 생성된 루틴은 제외 (그날 존재하지 않았으므로)
-     * 오늘 날짜로 호출하면 결과가 기존 "현재 활성 루틴 전체"와 동일해서 getTodayRoutines에도 안전하게 재사용 가능.
+     * 오늘 목록(체크리스트)에는 쓰지 않음 - 그건 getTodayRoutines가 별도로 담당함.
+     * 이 메서드는 히트맵에서 과거 날짜를 조회할 때만 사용.
      */
     public List<RoutineResponse> getRoutinesForDate(Long userId, LocalDate date) {
         List<RoutineLog> logs = routineLogRepository.findByUserIdAndLogDate(userId, date);
