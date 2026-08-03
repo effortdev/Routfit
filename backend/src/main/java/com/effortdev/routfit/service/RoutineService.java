@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -125,9 +126,16 @@ public class RoutineService {
 
     public DailyProgressResponse getDailyProgress(Long userId, LocalDate date) {
         List<Routine> activeRoutines = routineRepository.findByUserIdAndActiveTrueOrderBySortOrderAsc(userId);
+        Set<Long> activeRoutineIds = activeRoutines.stream().map(Routine::getId).collect(Collectors.toSet());
         List<RoutineLog> logs = routineLogRepository.findByUserIdAndLogDate(userId, date);
+
         int total = activeRoutines.size();
-        long completed = logs.stream().filter(RoutineLog::isCompleted).count();
+        // 삭제(비활성화)된 루틴의 과거 체크 기록은 히트맵 히스토리용으로 남겨두지만,
+        // "오늘 달성률"에는 지금 활성 상태인 루틴의 체크만 반영되어야 함.
+        long completed = logs.stream()
+                .filter(RoutineLog::isCompleted)
+                .filter(l -> activeRoutineIds.contains(l.getRoutine().getId()))
+                .count();
         double rate = total == 0 ? 0.0 : Math.round((completed * 1000.0 / total)) / 10.0;
         return new DailyProgressResponse(date, total, (int) completed, rate);
     }
