@@ -46,6 +46,12 @@ public class BodyMetricsController {
         return bodyMetricsService.uploadPhoto(userId, date, photo);
     }
 
+    // 그날 진행 사진 삭제
+    @DeleteMapping("/{date}/photo")
+    public MetricsResponse deletePhoto(@CurrentUserId Long userId, @PathVariable LocalDate date) {
+        return bodyMetricsService.deletePhoto(userId, date);
+    }
+
     // 그날 진행 사진 조회 (본인 것만, JWT 인증 필요)
     @GetMapping("/{date}/photo")
     public ResponseEntity<Resource> getPhoto(@CurrentUserId Long userId, @PathVariable LocalDate date) {

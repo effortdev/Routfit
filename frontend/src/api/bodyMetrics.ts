@@ -30,3 +30,8 @@ export async function getProgressPhotoUrl(date: string): Promise<string> {
   const { data } = await apiClient.get(`/api/v1/body-metrics/${date}/photo`, { responseType: 'blob' })
   return URL.createObjectURL(data as Blob)
 }
+
+export async function deleteProgressPhoto(date: string): Promise<MetricsEntry> {
+  const { data } = await apiClient.delete<MetricsEntry>(`/api/v1/body-metrics/${date}/photo`)
+  return data
+}

@@ -89,6 +89,7 @@ public class BodyMetricsService {
     }
 
     // 그날 진행 사진 업로드. 그날 몸무게 기록이 먼저 있어야 함(같은 날짜의 BodyMetricsLog에 매달림).
+    // 이미 사진이 있던 날짜면 새 파일로 교체하고, 확장자가 달라져서 파일명이 바뀌는 경우 이전 파일은 정리함.
     @Transactional
     public MetricsResponse uploadPhoto(Long userId, LocalDate date, MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -102,6 +103,7 @@ public class BodyMetricsService {
         BodyMetricsLog log = bodyMetricsLogRepository.findByUserIdAndRecordDate(userId, date)
                 .orElseThrow(() -> new IllegalArgumentException("먼저 그날 몸무게를 기록해야 사진을 올릴 수 있습니다."));
 
+        String previousFilename = log.getPhotoFilename();
         String ext = extensionFor(file.getContentType());
         String filename = userId + "_" + date + "." + ext;
 
@@ -110,11 +112,36 @@ public class BodyMetricsService {
             Files.createDirectories(dir);
             Path target = dir.resolve(filename);
             file.transferTo(target);
+
+            // 기존 파일 확장자가 달라서 파일명이 바뀐 경우, 예전 파일은 지워서 용량 안 남게 정리
+            if (previousFilename != null && !previousFilename.equals(filename)) {
+                Files.deleteIfExists(dir.resolve(previousFilename));
+            }
         } catch (IOException e) {
             throw new UncheckedIOException("사진 저장에 실패했습니다.", e);
         }
 
         log.updatePhoto(filename);
+        return toResponse(log, user);
+    }
+
+    // 그날 사진 삭제 (몸무게 기록 자체는 남기고 사진만 제거)
+    @Transactional
+    public MetricsResponse deletePhoto(Long userId, LocalDate date) {
+        User user = getUser(userId);
+        BodyMetricsLog log = bodyMetricsLogRepository.findByUserIdAndRecordDate(userId, date)
+                .orElseThrow(() -> new IllegalArgumentException("그날 기록을 찾을 수 없습니다."));
+
+        String filename = log.getPhotoFilename();
+        if (filename != null) {
+            try {
+                Files.deleteIfExists(Path.of(uploadDir, "progress-photos", filename));
+            } catch (IOException e) {
+                throw new UncheckedIOException("사진 삭제에 실패했습니다.", e);
+            }
+            log.updatePhoto(null);
+        }
+
         return toResponse(log, user);
     }
 

@@ -23,6 +23,7 @@ export default function BodyMetricsPage() {
   const [entries, setEntries] = useState<MetricsEntry[]>([])
   const [level, setLevel] = useState<BodyFatLevel | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [photoRefreshTrigger, setPhotoRefreshTrigger] = useState(0)
   const today = toIsoDate(new Date())
 
   async function loadAll() {
@@ -48,6 +49,7 @@ export default function BodyMetricsPage() {
       await uploadProgressPhoto(recordDate, photoFile)
     }
     await loadAll()
+    setPhotoRefreshTrigger((n) => n + 1) // 진행 사진 타임라인은 독립적으로 조회하므로 재조회 신호를 보냄
   }
 
   return (
@@ -59,7 +61,7 @@ export default function BodyMetricsPage() {
           ) : (
               <>
                 {level && <BodyFatLevelCard data={level} />}
-                <ProgressPhotoTimeline entries={entries} />
+                <ProgressPhotoTimeline refreshTrigger={photoRefreshTrigger} />
                 <RecentBodyFatTrend entries={entries} />
                 <MetricsTrendChart entries={entries} />
                 <WeightInputForm
