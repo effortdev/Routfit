@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { MetricsEntry, BodyFatLevel } from '../types'
-import { getMetricsRange, upsertMetrics, getCurrentBodyFatLevel } from '../api/bodyMetrics'
+import { getMetricsRange, upsertMetrics, uploadProgressPhoto, getCurrentBodyFatLevel } from '../api/bodyMetrics'
 import { useAuth } from '../contexts/AuthContext'
 import Header from '../components/Header'
 import WeightInputForm from '../components/WeightInputForm'
 import MetricsTrendChart from '../components/MetricsTrendChart'
 import RecentBodyFatTrend from '../components/RecentBodyFatTrend'
+import ProgressPhotoTimeline from '../components/ProgressPhotoTimeline'
 import BodyFatLevelCard from '../components/BodyFatLevelCard'
 
 function toIsoDate(d: Date): string {
@@ -41,8 +42,11 @@ export default function BodyMetricsPage() {
     loadAll().finally(() => setIsLoading(false))
   }, [])
 
-  async function handleSubmit(recordDate: string, weightKg: number, bodyFatPercent?: number) {
+  async function handleSubmit(recordDate: string, weightKg: number, bodyFatPercent?: number, photoFile?: File | null) {
     await upsertMetrics(recordDate, weightKg, bodyFatPercent)
+    if (photoFile) {
+      await uploadProgressPhoto(recordDate, photoFile)
+    }
     await loadAll()
   }
 
@@ -55,6 +59,7 @@ export default function BodyMetricsPage() {
           ) : (
               <>
                 {level && <BodyFatLevelCard data={level} />}
+                <ProgressPhotoTimeline entries={entries} />
                 <RecentBodyFatTrend entries={entries} />
                 <MetricsTrendChart entries={entries} />
                 <WeightInputForm

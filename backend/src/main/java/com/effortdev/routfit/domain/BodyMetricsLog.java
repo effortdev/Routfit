@@ -38,6 +38,10 @@ public class BodyMetricsLog {
     @Column(name = "source", nullable = false)
     private String source;
 
+    // 그날 진행 사진 파일명 (디스크상 실제 경로는 서비스가 조합). null이면 사진 없음.
+    @Column(name = "photo_filename")
+    private String photoFilename;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -58,5 +62,9 @@ public class BodyMetricsLog {
     public void update(Double weightKg, Double bodyFatPercent) {
         if (weightKg != null) this.weightKg = weightKg;
         if (bodyFatPercent != null) this.bodyFatPercent = bodyFatPercent;
+    }
+
+    public void updatePhoto(String photoFilename) {
+        this.photoFilename = photoFilename;
     }
 }

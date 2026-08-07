@@ -35,7 +35,7 @@ function toIsoDate(d: Date): string {
 }
 
 // 깃허브 스타일 잔디, 모바일 가로 스크롤 전용 (7행 x N열)
-// 페이지 진입 시 오늘 날짜가 기본으로 열려있고, 다른 잔디를 누르면 그 날짜 내용으로 전환됨
+// 루틴 전용 화면이라 여기서는 루틴 체크 목록 + 메모만 다룸 (몸무게/사진은 /metrics 페이지 담당)
 export default function HabitHeatmap({ cells, rangeStart, rangeEnd, isDefaultRange, onJumpToDate, onResetRange }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [dayRoutines, setDayRoutines] = useState<Routine[]>([])

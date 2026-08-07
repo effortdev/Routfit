@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Gender } from '../types'
 import { estimateBodyFatPercent } from '../utils/bodyFat'
+import { compressImage } from '../utils/imageCompress'
 
 interface Props {
   defaultDate: string
   userHeightCm?: number | null
   userGender?: Gender | null
   userAge?: number | null
-  onSubmit: (recordDate: string, weightKg: number, bodyFatPercent?: number) => Promise<void>
+  onSubmit: (recordDate: string, weightKg: number, bodyFatPercent?: number, photoFile?: File | null) => Promise<void>
 }
 
 export default function WeightInputForm({ defaultDate, userHeightCm, userGender, userAge, onSubmit }: Props) {
@@ -16,6 +17,8 @@ export default function WeightInputForm({ defaultDate, userHeightCm, userGender,
   const [bodyFat, setBodyFat] = useState('')
   // 지금 bodyFat 값이 "자동계산으로 채워진 값"인지, "사용자가 직접 수정한 값"인지 구분
   const [isBodyFatAuto, setIsBodyFatAuto] = useState(true)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [isCompressing, setIsCompressing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [savedMessage, setSavedMessage] = useState('')
 
@@ -35,6 +38,21 @@ export default function WeightInputForm({ defaultDate, userHeightCm, userGender,
     setIsBodyFatAuto(false) // 사용자가 직접 건드리면 더 이상 자동계산 대상 아님
   }
 
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) {
+      setPhotoFile(null)
+      return
+    }
+    setIsCompressing(true)
+    try {
+      const compressed = await compressImage(file)
+      setPhotoFile(compressed)
+    } finally {
+      setIsCompressing(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const weightNum = parseFloat(weight)
@@ -43,8 +61,9 @@ export default function WeightInputForm({ defaultDate, userHeightCm, userGender,
     setIsSaving(true)
     setSavedMessage('')
     try {
-      await onSubmit(date, weightNum, bodyFat ? parseFloat(bodyFat) : undefined)
+      await onSubmit(date, weightNum, bodyFat ? parseFloat(bodyFat) : undefined, photoFile)
       setSavedMessage('저장했어요.')
+      setPhotoFile(null)
       setTimeout(() => setSavedMessage(''), 2000)
     } finally {
       setIsSaving(false)
@@ -97,12 +116,26 @@ export default function WeightInputForm({ defaultDate, userHeightCm, userGender,
             <p className="text-[11px] text-moss -mt-1">키·성별 기반 자동계산 값이에요. 직접 수정할 수도 있어요.</p>
         )}
 
+        <label className="flex flex-col gap-1">
+          <span className="text-[11px] text-paper/40">진행 사진 (선택)</span>
+          <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoChange}
+              className="text-xs text-paper/70 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-panelSoft file:text-paper/70 file:text-xs"
+          />
+          {isCompressing && <span className="text-[11px] text-paper/40">사진 압축 중...</span>}
+          {!isCompressing && photoFile && (
+              <span className="text-[11px] text-moss">{photoFile.name} ({(photoFile.size / 1024).toFixed(0)}KB) 선택됨</span>
+          )}
+        </label>
+
         <button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || isCompressing}
             className="bg-ember text-ink font-medium rounded-card py-3 min-h-[44px] active:scale-95 transition disabled:opacity-50"
         >
-          {isSaving ? '저장 중...' : savedMessage || '기록 저장'}
+          {isSaving ? '저장 중...' : isCompressing ? '사진 처리 중...' : savedMessage || '기록 저장'}
         </button>
       </form>
   )

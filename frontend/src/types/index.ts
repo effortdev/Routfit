@@ -31,6 +31,7 @@ export interface MetricsEntry {
   bodyFatPercent: number | null
   bodyFatLevel: number | null
   source: string
+  hasPhoto: boolean
 }
 
 export interface BodyFatLevel {

@@ -19,7 +19,8 @@ public class BodyMetricsDtos {
             Double weightKg,
             Double bodyFatPercent,
             Integer bodyFatLevel,
-            String source
+            String source,
+            boolean hasPhoto
     ) {}
 
     public record BodyFatLevelResponse(
